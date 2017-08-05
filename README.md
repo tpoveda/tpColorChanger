@@ -1,7 +1,7 @@
 # tpColorChanger
 Tool to change the appearance of Maya controls
 
-![](http://imgur.com/a/XQnkd)
+![](http://i.imgur.com/IHvVXWu.png)
 
 Installation
 =========================================================
