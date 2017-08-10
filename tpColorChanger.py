@@ -183,8 +183,8 @@ class tpColorChanger(QDialog, object):
         # Set the dialog object name, window title and size
         self.setObjectName(winName)
         self.setWindowTitle('tpColorChanger')
-        self.setMinimumSize(245, 245)
-        self.setFixedSize(QSize(245, 245))
+        self.setMinimumSize(540, 530)
+        self.setFixedSize(QSize(540, 530))
         
         self.customUI()
         
@@ -198,10 +198,30 @@ class tpColorChanger(QDialog, object):
         self.layout().setSpacing(2)
         self.layout().setAlignment(Qt.AlignTop)
 
+        self.colorsTab = QTabWidget()
+
+        indexWidget = QWidget(self)
+        rgbWidget = QWidget(self)
+
+        indexLayout = QVBoxLayout()
+        indexLayout.setContentsMargins(15,15,15,15)
+        indexLayout.setSpacing(0)
+        rgbLayout = QVBoxLayout()
+        rgbLayout.setContentsMargins(5, 5, 5, 5)
+        rgbLayout.setSpacing(2)
+        rgbLayout.setAlignment(Qt.AlignTop)
+
+        indexWidget.setLayout(indexLayout)
+        rgbWidget.setLayout(rgbLayout)
+
+        indexTab = self.colorsTab.addTab(indexWidget, 'By Index')
+        rgbTab = self.colorsTab.addTab(rgbWidget, 'By RGB')
+
         self.layout().addWidget(tpSplitter('Pick Color'))
+        self.layout().addWidget(self.colorsTab)
 
         gridLayout = QGridLayout()
-        self.layout().addLayout(gridLayout)
+        indexLayout.addLayout(gridLayout)
 
         # Fill grid with Maya index available colors
         cIndex = 0
@@ -209,6 +229,8 @@ class tpColorChanger(QDialog, object):
         for i in range(0, 4):
             for j in range(0, 8):
                 cButton = QPushButton()
+                cButton.setMinimumHeight(65)
+                cButton.setMinimumWidth(65)
                 cButtons.append(cButton)
                 cButton.setStyleSheet(" background-color:rgb(%s,%s,%s);" % (
                 cControlColors[cIndex][0] * 255, cControlColors[cIndex][1] * 255,
@@ -216,26 +238,35 @@ class tpColorChanger(QDialog, object):
                 gridLayout.addWidget(cButton, i, j)
                 cIndex += 1
 
-        # Add selected color icon
-        self.layout().addWidget(tpSplitter('Selected Color'))
-
         selectedColorLayout = QHBoxLayout()
-        self.layout().addLayout(selectedColorLayout)
+        indexLayout.addLayout(selectedColorLayout)
 
-        self.colorLabel = QLabel()
-        self.colorLabel.setStyleSheet("border: 1px solid black; background-color:rgb(0, 0, 0);")
-        self.colorLabel.setMinimumWidth(45)
         self.colorSlider = QSlider(Qt.Horizontal)
         self.colorSlider.setMinimum(0)
         self.colorSlider.setMaximum(31)
         self.colorSlider.setValue(2)
         self.colorSlider.setStyleSheet(
-            "QSlider::groove:horizontal {border: 1px solid #999999;height: 8px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #B1B1B1, stop:1 #c4c4c4);margin: 2px 0;}QSlider::handle:horizontal {background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #b4b4b4, stop:1 #8f8f8f);border: 1px solid #5c5c5c;width: 10px;margin: -2px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */border-radius: 1px;}");
+            "QSlider::groove:horizontal {border: 1px solid #999999;height: 25px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #B1B1B1, stop:1 #c4c4c4);margin: 2px 0;}QSlider::handle:horizontal {background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #b4b4b4, stop:1 #8f8f8f);border: 1px solid #5c5c5c;width: 10px;margin: -2px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */border-radius: 1px;}");
 
-        selectedColorLayout.addWidget(self.colorLabel)
+        colorLabelLayout = QHBoxLayout()
+        colorLabelLayout.setContentsMargins(10, 10, 10, 0)
+        indexLayout.addLayout(colorLabelLayout)
+
+        self.colorLabel = QLabel()
+        self.colorLabel.setStyleSheet("border: 1px solid black; background-color:rgb(0, 0, 0);")
+        self.colorLabel.setMinimumWidth(45)
+        self.colorLabel.setMaximumWidth(80)
+        self.colorLabel.setMinimumHeight(80)
+        self.colorLabel.setAlignment(Qt.AlignCenter)
+
         selectedColorLayout.addWidget(self.colorSlider)
 
-        self.layout().addLayout(tpSplitterLayout())
+        colorLabelLayout.addWidget(self.colorLabel)
+
+        self.rgbColorDlg = QColorDialog(self)
+        self.rgbColorDlg.setWindowFlags(Qt.Widget)
+        self.rgbColorDlg.setOptions(QColorDialog.DontUseNativeDialog | QColorDialog.NoButtons)
+        rgbLayout.addWidget(self.rgbColorDlg)
 
         typeLayout = QHBoxLayout()
         typeBox = QGroupBox()
@@ -277,6 +308,9 @@ class tpColorChanger(QDialog, object):
         self.colorLabel.setStyleSheet("border: 1px solid black; background-color:rgb(%s, %s, %s);" % (
         cControlColors[index][0] * 255, cControlColors[index][1] * 255,
         cControlColors[index][2] * 255))
+        self.rgbColorDlg.setCurrentColor(QColor.fromRgb(
+        cControlColors[index][0] * 255, cControlColors[index][1] * 255,
+        cControlColors[index][2] * 255))
         self.colorSlider.setValue(index)
 
     def _setSlider(self, index):
@@ -313,13 +347,33 @@ class tpColorChanger(QDialog, object):
                         for shape in shapes:
                             if cmds.attributeQuery('overrideEnabled', node=shape, exists=True):
                                 cmds.setAttr(shape + '.overrideEnabled', True)
-                                if cmds.attributeQuery('overrideColor', node=shape, exists=True):
-                                    cmds.setAttr(shape + '.overrideColor', self.colorSlider.value())
+                                if self.colorsTab.currentIndex() == 0:
+                                    if cmds.attributeQuery('overrideRGBColors', node=shape, exists=True):
+                                        cmds.setAttr(shape + '.overrideRGBColors', False)
+                                    if cmds.attributeQuery('overrideColor', node=shape, exists=True):
+                                        cmds.setAttr(shape + '.overrideColor', self.colorSlider.value())
+                                else:
+                                    if cmds.attributeQuery('overrideRGBColors', node=shape, exists=True):
+                                        cmds.setAttr(shape + '.overrideRGBColors', True)
+                                        if cmds.attributeQuery('overrideColorRGB', node=shape, exists=True):
+                                            color = self.rgbColorDlg.currentColor()
+                                            cmds.setAttr(shape + '.overrideColorRGB', color.red()/255.0, color.green()/255.0, color.blue()/255.0)
+
                 if self.transformTypeCbx.isChecked():
                     if cmds.attributeQuery('overrideEnabled', node=obj, exists=True):
                         cmds.setAttr(obj + '.overrideEnabled', True)
-                        if cmds.attributeQuery('overrideColor', node=obj, exists=True):
-                            cmds.setAttr(obj + '.overrideColor', self.colorSlider.value())
+                        if self.colorsTab.currentIndex() == 0:
+                            if cmds.attributeQuery('overrideRGBColors', node=obj, exists=True):
+                                cmds.setAttr(obj + '.overrideRGBColors', False)
+                            if cmds.attributeQuery('overrideColor', node=obj, exists=True):
+                                cmds.setAttr(obj + '.overrideColor', self.colorSlider.value())
+                        else:
+                            if cmds.attributeQuery('overrideRGBColors', node=obj, exists=True):
+                                cmds.setAttr(obj + '.overrideRGBColors', True)
+                                if cmds.attributeQuery('overrideColorRGB', node=obj, exists=True):
+                                    color = self.rgbColorDlg.currentColor()
+                                    cmds.setAttr(obj + '.overrideColorRGB', color.red() / 255.0,
+                                                 color.green() / 255.0, color.blue() / 255.0)
 
 def initUI():
     tpColorChanger()
