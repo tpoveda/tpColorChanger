@@ -1,7 +1,7 @@
 # tpColorChanger
 Tool to change the appearance of Maya controls
 
-![](http://i.imgur.com/IHvVXWu.png)
+![](http://cgart3d.com/wp-content/uploads/2017/08/colorChanger.png)
 
 Installation
 =========================================================
@@ -9,4 +9,5 @@ Copy tpColorChanger.py file into your Documents/Maya/(Version)/scripts folder an
 
 ``` python
 import tpColorChanger
+reload(tpColorChanger)
 ```
